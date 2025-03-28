@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const { jwtAuthMiddleware, generateToken } = require('./../jwt');
 
 const Person = require('../models/Person');
+const { authorize } = require('passport');
 
-router.post('/', async (req, res)=> {
-   
+router.post('/signup', async (req, res) => {
+
     try {
         const data = req.body
 
@@ -12,16 +14,26 @@ router.post('/', async (req, res)=> {
 
         const response = await newPerson.save();
         console.log('Data Saved');
-        res.status(200).json(response);
-    
+
+        const payload = {
+            id : response.id,
+            username: response.username
+        }
+        const token = generateToken(payload);
+        console.log("Token is:", token);
+
+        res.status(200).json({ response: response, token: token });
+
     } catch (err) {
         console.log(err);
-        res.status(500).json({error:'Internal server error'});;
+        res.status(500).json({ error: 'Internal server error' });;
     }
-    
+
 })
 
-router.get('/', async (req,res) =>{
+
+
+router.get('/', jwtAuthMiddleware,async (req, res) => {
     try {
         const data = await Person.find();
         console.log('Data fetch');
@@ -29,38 +41,38 @@ router.get('/', async (req,res) =>{
 
     } catch (err) {
         console.log(err);
-        res.status(500).json({error:'Internal server error'});
+        res.status(500).json({ error: 'Internal server error' });
     }
 })
 
-router.get('/:workType', async (req,res) =>{
+router.get('/:workType', async (req, res) => {
     try {
         const workType = req.params.workType;
-        if(workType == 'manager' || workType =='chef'){
-            const response = await Person.find({work:workType});
+        if (workType == 'manager' || workType == 'chef') {
+            const response = await Person.find({ work: workType });
             console.log('Data fetch');
             res.status(200).json(response);
-        }else{
-            res.status(404).json({error:'Invalid work type'});
+        } else {
+            res.status(404).json({ error: 'Invalid work type' });
         }
 
     } catch (err) {
         console.log(err);
-        res.status(500).json({error:'Internal server error'});
+        res.status(500).json({ error: 'Internal server error' });
     }
 })
 
-router.put('/:id', async(req,res)=>{
+router.put('/:id', async (req, res) => {
     try {
         const personId = req.params.id;
         const updateData = req.body;
 
-        const response = await Person.findByIdAndUpdate(personId, updateData,{
+        const response = await Person.findByIdAndUpdate(personId, updateData, {
             new: true,
-            runValidators:true
+            runValidators: true
         })
 
-        if(!response){
+        if (!response) {
             res.status(404).json("Person not found");
         }
 
@@ -69,17 +81,17 @@ router.put('/:id', async(req,res)=>{
 
     } catch (err) {
         console.log(err);
-        res.status(500).json({error:'Internal server error'});
+        res.status(500).json({ error: 'Internal server error' });
     }
 })
 
-router.delete('/:id', async(req,res)=>{
+router.delete('/:id', async (req, res) => {
     try {
         const personId = req.params.id;
 
         const response = await Person.findByIdAndDelete(personId);
 
-        if(!response){
+        if (!response) {
             res.status(404).json("Person not found");
         }
 
@@ -88,7 +100,7 @@ router.delete('/:id', async(req,res)=>{
 
     } catch (err) {
         console.log(err);
-        res.status(500).json({error:'Internal server error'});
+        res.status(500).json({ error: 'Internal server error' });
     }
 })
 

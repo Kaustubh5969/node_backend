@@ -16,7 +16,6 @@ const  logRequest = (req,res,next)=>{
 app.use(logRequest);
 
 const authenticateUser = passport.authenticate('local', {session:false});
-
 app.get('/', function (req, res) {
     res.send("Hello, Wel-Come");
 })
@@ -26,7 +25,7 @@ const menuItemRoutes = require('./routes/menuItemRoutes');
 
 
 
-app.use('/person',authenticateUser, personRoutes);
+app.use('/person', personRoutes);
 app.use('/menuItem', menuItemRoutes);
 
 
